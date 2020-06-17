@@ -55,6 +55,7 @@
 		<div class="main">
 			<div
 				class="lattice"
+				ref="lattice"
 				:style="`grid-template-rows: repeat(${row}, ${100/row}%);grid-template-columns: repeat(${column}, ${100/column}%)`"
 			>
 				<div
@@ -65,6 +66,7 @@
 				>
 					<transition :name="dropAnimate" mode="out-in">
 						<img
+							draggable="false"
 							:key="symbolImg(symbolsList[index].id)"
 							v-if="!symbolsList[index].isDelete && symbolsList[index].id >=0"
 							:src="symbolImg(symbolsList[index].id)"
@@ -78,7 +80,7 @@
 				<button class="drop" @click="onDrop">掉落 ( D )</button>
 				<button class="full" @click="onFull">补满 ( F )</button>
 				<div class="nextID">下个图标ID：{{ nextIndex }}</div>
-				<div class="dataBox">
+				<div class="dataBox" ref="dataBox">
 					<transition mode="out-in">
 						<textarea
 							v-if="dataEdit"
@@ -249,6 +251,15 @@ export default {
 				this.symbolsList.push(symbol);
 			}
 			this.nextIndex = symbolCnt;
+			//开始测试后，textarea切换为不可编辑，退出测试，变为可编辑
+			switch (this.enter) {
+				case true:
+					this.dataEdit = false;
+					break;
+				case false:
+					this.dataEdit = true;
+					break;
+			}
 		},
 		makeData(strData) {
 			return strData
@@ -462,10 +473,10 @@ export default {
 			.dataBox {
 				position: relative;
 				width: 120px;
-				min-height: 200px;
-				height: 20vh;
+				height: 224px;
 				border-radius: 4px;
 				background-color: #e0e0e0;
+				transition: 0.3s ease-in-out;
 				textarea,
 				.currSymbol {
 					width: 100%;
