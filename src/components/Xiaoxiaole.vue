@@ -140,7 +140,7 @@ export default {
 			loop1Cnt: 0,
 			loop2Cnt: 0,
 			dataEdit: true,
-			ver: "1.0.0"
+			ver: "0.1.0"
 		};
 	},
 	computed: {
