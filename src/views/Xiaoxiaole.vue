@@ -70,7 +70,6 @@
 							:key="symbolImg(symbolsList[index].id)"
 							v-if="!symbolsList[index].isDelete && symbolsList[index].id >=0"
 							:src="symbolImg(symbolsList[index].id)"
-							alt
 						/>
 					</transition>
 					<span>{{ symbolsList[index].arrId }}</span>
@@ -99,7 +98,7 @@
 						<img
 							:key="nextIndex"
 							class="nextImg"
-							:src="`http://maxlearn.top/slot-icon/1029/img_symbol${nextIndex-10}.png`"
+							:src="`icon/${gameId}/img_symbol${nextIndex-10}.png`"
 							alt
 						/>
 					</transition>

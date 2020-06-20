@@ -5,7 +5,7 @@
 </template>
 
 <script>
-import Xiaoxiaole from "./components/Xiaoxiaole.vue";
+import Xiaoxiaole from "./views/Xiaoxiaole.vue";
 
 export default {
 	name: "App",
