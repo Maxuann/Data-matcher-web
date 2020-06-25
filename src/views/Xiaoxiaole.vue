@@ -80,7 +80,7 @@
 				<button class="full" @click="onFull">补满 ( F )</button>
 				<div class="nextID">下个图标ID：{{ nextIndex }}</div>
 				<div class="dataBox" ref="dataBox">
-					<transition mode="out-in">
+					<transition name="data" mode="out-in">
 						<textarea
 							v-if="dataEdit"
 							v-model.lazy="jsonData"
@@ -237,9 +237,16 @@ export default {
 			this.jsonData.push(newVal);
 			this.iconQueue.push(newVal);
 			//侦测到推入新的图标，滚动到最下面
-			setTimeout(() => {
-				this.$refs.isIconQueue.scrollTop = this.$refs.isIconQueue.scrollHeight;
-			}, 50);
+			switch (this.dataEdit) {
+				case false:
+					setTimeout(() => {
+						this.$refs.isIconQueue.scrollTop = this.$refs.isIconQueue.scrollHeight;
+					}, 50);
+					break;
+				case true:
+					null;
+					break;
+			}
 		}
 	},
 	created() {
@@ -321,11 +328,7 @@ export default {
 			// 显示图标
 			if (this.gameId < 0) return;
 			if (symbolID >= 0) {
-				return require("@/assets/images/dianyou/" +
-					this.gameId +
-					"/img_symbol" +
-					symbolID +
-					".png");
+				return "icon/" + this.gameId + "/img_symbol" + symbolID + ".png";
 			} else {
 				// return require('@/assets/welcome/transparent.png');
 			}
@@ -346,17 +349,17 @@ export default {
 				case true:
 					//   console.log(index);
 					this.symbolsList[index].isDelete = true;
+					//每次删除一个图标计数加一，直到点击补满清零
+					this.singleDelCont++;
+					//每次点击删除图标，图标队列滚动到最上
+					setTimeout(() => {
+						this.$refs.isIconQueue.scrollTop = 0;
+					}, 50);
 					break;
 				case false:
 					null;
 					break;
 			}
-			//每次删除一个图标计数加一，直到点击补满清零
-			this.singleDelCont++;
-			//每次点击删除图标，图标队列滚动到最上
-			setTimeout(() => {
-				this.$refs.isIconQueue.scrollTop = 0;
-			}, 50);
 		},
 		onDrop() {
 			//判断测试是否开始，没有开始不执行任何操作
@@ -624,13 +627,13 @@ export default {
 	}
 }
 //默认淡入淡出切换
-.v-enter,
-.v-leave-to {
+.data-enter,
+.data-leave-to {
 	opacity: 0;
 }
-.v-enter-active,
-.v-leave-active {
-	transition: 0.15s ease-in-out;
+.data-enter-active,
+.data-leave-active {
+	transition: 0.3s ease-in-out;
 }
 //下一个图标下移出现
 .nextImg-enter {
