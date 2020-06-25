@@ -4,20 +4,21 @@
    padding: 0;
    margin: 0;
 }
+@sideBar: rgb(50, 50, 50);
+@bg:rgb(248, 248, 248);
+@lattice:rgb(228, 228, 228);
+@setting: rgb(219, 219, 219);
+
+
 body{
    font-family:'Microsoft Yahei',Tahoma,Arial,Helvetica,sans-serif;
 	-webkit-font-smoothing: antialiased;
 	-moz-osx-font-smoothing: grayscale;
    user-select: none;
+   overflow: hidden;
 }
 .container{
-   background-color: #f2f2f2;
-   position: absolute;
-   top: 50%;
-   left: 50%;
-   transform: translate(-50%,-50%);
-   border-radius: 6px;
-   overflow: hidden;
+   background-color: @bg;
    display: flex;
    flex-direction: column;
    .status_bar{
@@ -86,8 +87,28 @@ input[type="number"]::-webkit-outer-spin-button {
    -webkit-appearance: none;
    margin: 0;
 }
-.direction svg{
-   margin-left: 6px;
+input[type="range"] {
+  margin-top: 20px;
+  background-color: rgba(235, 239, 244, 0.5);
+  -webkit-appearance: none;
+  height:5px;
+  padding: 0;
+}
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;/*去除默认样式*/
+  height: 14px;
+  width: 14px;
+  background: rgb(255, 255, 255);
+  border-radius: 50%;
+}
+.direction{
+   width: 65px;
+   display: flex;
+   justify-content: space-between;
+   align-items: center;
+   svg{
+      margin-left: 6px;
+   }
 }
 .failure{
    background-color: #9c9c9c;

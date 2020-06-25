@@ -83,34 +83,21 @@
 					<transition mode="out-in">
 						<textarea
 							v-if="dataEdit"
-							v-model.lazy="inputString"
+							v-model.lazy="jsonData"
 							onkeyup="this.value=this.value.replace(/[^\r\n0-9,]/g,'');"
 						/>
-						<div v-else class="currSymbol">
-							<span
-								v-for="(symbolId,index) in jsonData"
-								:key="index"
-								:class="isCurrSymbol(index)"
-							>{{ symbolId }},</span>
+						<div v-else class="iconQueue" ref="isIconQueue">
+							<div v-for="(id,index) in iconQueue" :key="index">
+								<img draggable="false" :src="`icon/${gameId}/img_symbol${id}.png`" />
+								<p>{{id}}</p>
+							</div>
 						</div>
 					</transition>
-					<transition name="nextImg" mode="out-in">
-						<img
-							:key="nextIndex"
-							class="nextImg"
-							:src="`icon/${gameId}/img_symbol${nextIndex-10}.png`"
-							alt
-						/>
-					</transition>
-					<div class="switchBtn" @click="dataEdit = !dataEdit" :class="{switchBtnActive:!dataEdit}">
-						<div class="btn"></div>
-					</div>
+				</div>
+				<div class="switchBtn" @click="dataEdit = !dataEdit" :class="{switchBtnActive:!dataEdit}">
+					<div class="btn"></div>
 				</div>
 			</div>
-		</div>
-		<div class="msg">
-			<p class="tips">{{ tips }}</p>
-			<p class="ver">消消乐 ver.{{ ver }}</p>
 		</div>
 	</div>
 </template>
@@ -122,25 +109,73 @@ export default {
 	data() {
 		return {
 			enter: false,
-			gameId: 1029,
 			row: 4,
 			column: 4,
 			direction: 1,
-			inputString:
-				"4,2,3,4,1,2,3,4,1,2,3,4,1,1,3,4,6,7,8,9,10,11,12,13,14,10,11,12,13,2,4,4,6,3,2,5,4,5,3,2,4,4,5,23,4,5",
-			jsonData: [],
-			symbolsList: [],
 			nextIndex: 0,
-			tips: "点击输入框上下调整行列，点击或空格更改掉落方向",
+			jsonData: [
+				1,
+				2,
+				3,
+				4,
+				5,
+				6,
+				7,
+				8,
+				9,
+				10,
+				11,
+				12,
+				13,
+				14,
+				15,
+				16,
+				17,
+				17,
+				16,
+				15,
+				14,
+				13,
+				12,
+				11,
+				10,
+				9,
+				8,
+				7,
+				6,
+				5,
+				4,
+				3,
+				2,
+				1,
+				0,
+				1,
+				2,
+				3
+			],
+			symbolsList: [],
+			//之后要出现的图标队列
+			iconQueue: [],
+			//对下次补满前点击删除图标的个数计数
+			singleDelCont: 0,
 			// 是不是横向掉落（左、右为横向掉落，上、下为纵向掉落）
 			isH: false,
 			// 是不是从数组的后面压入掉落图标（右和下为true）
 			isPushEnd: true,
 			loop1Cnt: 0,
 			loop2Cnt: 0,
-			dataEdit: true,
-			ver: "0.1.0"
+			dataEdit: true
 		};
+	},
+	props: {
+		gameId: {
+			type: Number,
+			default: 0
+		},
+		pushNewIcon: {
+			type: Number,
+			default: -1
+		}
 	},
 	computed: {
 		rowPercent() {
@@ -188,19 +223,28 @@ export default {
 		}
 	},
 	watch: {
-		inputString() {
+		jsonData() {
 			const amount = this.row * this.column;
-			this.jsonData = this.inputString.split(",");
 			const dataLength = this.jsonData.length;
 			if (amount > dataLength && this.enter === true) {
 				alert("数据错误，请检查");
 			} else {
 				console.log("数据正确");
 			}
+		},
+		pushNewIcon(newVal) {
+			//把新图标index推入到两个数组
+			this.jsonData.push(newVal);
+			this.iconQueue.push(newVal);
+			//侦测到推入新的图标，滚动到最下面
+			setTimeout(() => {
+				this.$refs.isIconQueue.scrollTop = this.$refs.isIconQueue.scrollHeight;
+			}, 50);
 		}
 	},
 	created() {
 		this.initTable();
+
 		//键盘监听控制
 		document.onkeyup = () => {
 			if (event.keyCode == 13)
@@ -223,7 +267,6 @@ export default {
 	methods: {
 		startTest() {
 			const symbolCnt = this.row * this.column;
-			this.jsonData = this.makeData(this.inputString);
 			if (this.jsonData.length < symbolCnt) {
 				alert("开始前请填满" + symbolCnt.toString() + "个初始数据");
 				return;
@@ -250,6 +293,9 @@ export default {
 				this.symbolsList.push(symbol);
 			}
 			this.nextIndex = symbolCnt;
+			//开始测试后获取格子中未出现的之后的数组
+			this.iconQueue = this.jsonData.slice(this.row * this.column);
+
 			//开始测试后，textarea切换为不可编辑，退出测试，变为可编辑
 			switch (this.enter) {
 				case true:
@@ -259,12 +305,6 @@ export default {
 					this.dataEdit = true;
 					break;
 			}
-		},
-		makeData(strData) {
-			return strData
-				.replace(/[^0-9,，]/g, "")
-				.replace(/[，]/g, ",")
-				.split(",");
 		},
 		initTable() {
 			this.symbolsList = [];
@@ -291,9 +331,6 @@ export default {
 			}
 			return "";
 		},
-		isCurrSymbol(id) {
-			return id === this.nextIndex ? "curr_color" : "";
-		},
 		onDirection() {
 			if (!this.enter) {
 				if (this.direction < 4) {
@@ -314,6 +351,12 @@ export default {
 					null;
 					break;
 			}
+			//每次删除一个图标计数加一，直到点击补满清零
+			this.singleDelCont++;
+			//每次点击删除图标，图标队列滚动到最上
+			setTimeout(() => {
+				this.$refs.isIconQueue.scrollTop = 0;
+			}, 50);
 		},
 		onDrop() {
 			//判断测试是否开始，没有开始不执行任何操作
@@ -429,6 +472,9 @@ export default {
 					null;
 					break;
 			}
+			//点击补满后,图标队列减去单次删除计数，然后计数清零
+			this.iconQueue.splice(0, this.singleDelCont);
+			this.singleDelCont = 0;
 		}
 	}
 };
@@ -436,6 +482,9 @@ export default {
 
 <style scoped lang="less">
 .container {
+	display: flex;
+	justify-content: center;
+	align-items: stretch;
 	.status_bar {
 		height: 64px;
 		.set_up {
@@ -453,11 +502,11 @@ export default {
 		justify-content: space-between;
 		align-items: stretch;
 		.test {
+			position: relative;
 			width: 100%;
-			height: 100%;
 			display: flex;
 			flex-direction: column;
-			justify-content: space-between;
+			justify-content: flex-start;
 			align-items: stretch;
 			margin: 15px 15px 15px 0;
 			padding-left: 15px;
@@ -474,55 +523,66 @@ export default {
 				width: 120px;
 				height: 224px;
 				border-radius: 4px;
-				background-color: #e0e0e0;
+				background-color: @lattice;
 				transition: 0.3s ease-in-out;
+				overflow: hidden;
 				textarea,
-				.currSymbol {
+				.iconQueue {
 					width: 100%;
 					height: 100%;
 					position: absolute;
 					top: 0;
 					left: 0;
 					padding: 6px;
+					box-sizing: border-box;
 					font-family: "Helvetica";
 					resize: none;
 					text-align: justify;
+					overflow: hidden;
+					overflow-y: auto;
+					-webkit-touch-callout: none;
+					-webkit-user-select: none;
+					-khtml-user-select: none;
+					-moz-user-select: none;
+					-ms-user-select: none;
+					&::-webkit-scrollbar {
+						display: none;
+					}
+					scroll-behavior: smooth;
 				}
-				.currSymbol {
-					height: auto;
-					display: flex;
-					flex-wrap: wrap;
-					box-sizing: border-box;
+				.iconQueue {
+					div {
+						display: flex;
+						justify-content: flex-start;
+						align-items: center;
+						img {
+							width: 36px;
+						}
+					}
 				}
-				.switchBtn {
-					position: absolute;
-					bottom: 3px;
-					left: 3px;
-					width: 30px;
-					height: 15px;
-					padding: 2px;
-					background-color: #62b600;
+			}
+			.switchBtn {
+				position: absolute;
+				bottom: 3px;
+				right: 3px;
+				width: 30px;
+				height: 15px;
+				padding: 2px;
+				background-color: #62b600;
+				border-radius: 4px;
+				transition: 0.2s ease-in-out;
+				.btn {
+					width: 50%;
+					height: 100%;
+					background-color: #fff;
 					border-radius: 4px;
 					transition: 0.2s ease-in-out;
-					.btn {
-						width: 50%;
-						height: 100%;
-						background-color: #fff;
-						border-radius: 4px;
-						transition: 0.2s ease-in-out;
-					}
 				}
-				.switchBtnActive {
-					background-color: #999999;
-					.btn {
-						transform: translateX(100%);
-					}
-				}
-				.nextImg {
-					position: absolute;
-					bottom: 3px;
-					right: 3px;
-					width: 60px;
+			}
+			.switchBtnActive {
+				background-color: #999999;
+				.btn {
+					transform: translateX(100%);
 				}
 			}
 		}
@@ -535,11 +595,10 @@ export default {
 				max-width: 80px;
 				max-height: 80px;
 				border-radius: 4px;
-				background-color: #e0e0e0;
+				background-color: @lattice;
 				display: inline-grid;
 				margin: 5px;
 				position: relative;
-				// overflow: hidden;
 				img {
 					width: 100% !important;
 					height: 100% !important;
@@ -551,26 +610,6 @@ export default {
 					font-size: 13px;
 					color: rgb(153, 153, 153);
 				}
-				// &:hover span {
-				// 	color: #fff;
-				// }
-				// &::before {
-				// 	content: "删除";
-				// 	position: absolute;
-				// 	width: 100%;
-				// 	height: 100%;
-				// 	background-color: rgba(0, 0, 0, 0.7);
-				// 	color: #fff;
-				// 	display: flex;
-				// 	justify-content: center;
-				// 	align-items: center;
-				// 	opacity: 0;
-				// 	transition: 0.2s ease-in-out;
-				// 	font-size: 14px;
-				// }
-				// &:hover::before {
-				// 	opacity: 0.7;
-				// }
 			}
 		}
 	}
