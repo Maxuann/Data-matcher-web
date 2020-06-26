@@ -2,7 +2,7 @@ GAME_DATA = [
    {
       id: 1029,
       name: '消消乐',
-      iconAmount: 18
+      iconAmount: 36
    },
    {
       id: 1030,

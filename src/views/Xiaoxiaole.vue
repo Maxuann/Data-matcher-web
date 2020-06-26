@@ -1,5 +1,5 @@
 <template>
-	<div class="container">
+	<div class="container" ref="container">
 		<div class="status_bar">
 			<div class="set_up">
 				<div>
@@ -79,7 +79,7 @@
 				<button class="drop" @click="onDrop">掉落 ( D )</button>
 				<button class="full" @click="onFull">补满 ( F )</button>
 				<div class="nextID">下个图标ID：{{ nextIndex }}</div>
-				<div class="dataBox" ref="dataBox">
+				<div class="dataBox" :style="`height:${dataBoxHeight}px`">
 					<transition name="data" mode="out-in">
 						<textarea
 							v-if="dataEdit"
@@ -114,44 +114,54 @@ export default {
 			direction: 1,
 			nextIndex: 0,
 			jsonData: [
+				0,
 				1,
-				2,
-				3,
-				4,
-				5,
 				6,
-				7,
-				8,
-				9,
-				10,
 				11,
+				16,
 				12,
 				13,
-				14,
-				15,
-				16,
-				17,
-				17,
-				16,
-				15,
-				14,
-				13,
-				12,
-				11,
-				10,
-				9,
 				8,
 				7,
-				6,
-				5,
-				4,
-				3,
 				2,
 				1,
 				0,
+				5,
+				6,
+				8,
+				9,
+				14,
+				12,
+				11,
+				10,
+				15,
+				16,
+				11,
+				6,
 				1,
+				0,
+				5,
+				10,
+				11,
+				12,
+				7,
+				8,
+				4,
+				9,
+				14,
+				13,
+				8,
+				3,
 				2,
-				3
+				7,
+				12,
+				11,
+				6,
+				1,
+				0,
+				5,
+				10,
+				15
 			],
 			symbolsList: [],
 			//之后要出现的图标队列
@@ -164,7 +174,8 @@ export default {
 			isPushEnd: true,
 			loop1Cnt: 0,
 			loop2Cnt: 0,
-			dataEdit: true
+			dataEdit: true,
+			dataBoxHeight: 224
 		};
 	},
 	props: {
@@ -223,15 +234,15 @@ export default {
 		}
 	},
 	watch: {
-		jsonData() {
-			const amount = this.row * this.column;
-			const dataLength = this.jsonData.length;
-			if (amount > dataLength && this.enter === true) {
-				alert("数据错误，请检查");
-			} else {
-				console.log("数据正确");
-			}
-		},
+		// jsonData() {--------------------------------------------------------------------
+		// 	const amount = this.row * this.column;
+		// 	const dataLength = this.jsonData.length;
+		// 	if (amount > dataLength && this.enter === true) {
+		// 		alert("数据错误，请检查");
+		// 	} else {
+		// 		console.log("数据正确");
+		// 	}
+		// },------------------------------------------------------------------------------
 		pushNewIcon(newVal) {
 			//把新图标index推入到两个数组
 			this.jsonData.push(newVal);
@@ -247,6 +258,65 @@ export default {
 					null;
 					break;
 			}
+		},
+		//通过row值判断组件高度并传递给父组件，来设定 gamesSlect 和 iconBox 高度
+		row(newRow) {
+			var height;
+			switch (newRow) {
+				case "4":
+					height = 444;
+					break;
+				case "5":
+					height = 534;
+					break;
+				case "6":
+					height = 624;
+					break;
+				case "7":
+					height = 714;
+					break;
+				case "8":
+					height = 784;
+					break;
+				case "9":
+					height = 794;
+					break;
+				case "10":
+					height = 804;
+					break;
+				case "11":
+					height = 814;
+					break;
+				case "12":
+					height = 824;
+					break;
+				case "13":
+					height = 834;
+					break;
+				case "14":
+					height = 844;
+					break;
+				case "15":
+					height = 854;
+					break;
+				case "16":
+					height = 864;
+					break;
+				case "17":
+					height = 874;
+					break;
+				case "18":
+					height = 884;
+					break;
+				case "19":
+					height = 894;
+					break;
+				case "20":
+					height = 904;
+					break;
+			}
+			this.dataBoxHeight = height - 220;
+			this.$emit("clientHeight", height);
 		}
 	},
 	created() {
@@ -274,10 +344,10 @@ export default {
 	methods: {
 		startTest() {
 			const symbolCnt = this.row * this.column;
-			if (this.jsonData.length < symbolCnt) {
-				alert("开始前请填满" + symbolCnt.toString() + "个初始数据");
-				return;
-			}
+			// if (this.jsonData.length < symbolCnt) {--------------------------------------------
+			// 	alert("开始前请填满" + symbolCnt.toString() + "个初始数据");
+			// 	return;
+			// }----------------------------------------------------------------------------------
 			this.enter = !this.enter;
 			this.symbolsList = [];
 			this.isH = this.direction % 2 === 0; // 横向
@@ -303,7 +373,7 @@ export default {
 			//开始测试后获取格子中未出现的之后的数组
 			this.iconQueue = this.jsonData.slice(this.row * this.column);
 
-			//开始测试后，textarea切换为不可编辑，退出测试，变为可编辑
+			//开始测试后，textarea切换到图标队列，退出测试，切换回textarea
 			switch (this.enter) {
 				case true:
 					this.dataEdit = false;
@@ -318,7 +388,7 @@ export default {
 			for (var i = 0; i < this.row * this.column; i++) {
 				var symbol = {
 					id: -1,
-					arrId: -1,
+					arrId: null,
 					isDelete: false
 				};
 				this.symbolsList.push(symbol);
@@ -513,7 +583,7 @@ export default {
 			align-items: stretch;
 			margin: 15px 15px 15px 0;
 			padding-left: 15px;
-			border-left: 1px solid #dbdbdb;
+			border-left: 1px solid @lattice;
 			button {
 				margin-bottom: 20px;
 			}
@@ -527,7 +597,6 @@ export default {
 				height: 224px;
 				border-radius: 4px;
 				background-color: @lattice;
-				transition: 0.3s ease-in-out;
 				overflow: hidden;
 				textarea,
 				.iconQueue {
@@ -543,11 +612,6 @@ export default {
 					text-align: justify;
 					overflow: hidden;
 					overflow-y: auto;
-					-webkit-touch-callout: none;
-					-webkit-user-select: none;
-					-khtml-user-select: none;
-					-moz-user-select: none;
-					-ms-user-select: none;
 					&::-webkit-scrollbar {
 						display: none;
 					}
