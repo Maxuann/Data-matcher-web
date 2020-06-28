@@ -19,3 +19,15 @@ export function deepClone(source) {
   })
   return targetObj
 }
+
+export function getLocalStorage(_this, obj) {
+  let data = JSON.parse(localStorage.getItem(obj));
+  if (data) {
+    let key = Object.keys(data);
+    let val = Object.values(data);
+
+    for (let i = 0; i < key.length; i++) {
+      _this[key[i]] = val[i]
+    }
+  }
+}

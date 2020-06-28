@@ -1,5 +1,5 @@
 <template>
-	<div id="app" @click="isFilter = false">
+	<div id="app" @click="closeFV" :class="{showVersion:isVersion}">
 		<transition name="bg" mode="out-in">
 			<div
 				class="bg"
@@ -16,7 +16,7 @@
 				<div class="buttom">
 					<img class="iconBoxBtn" src="@/assets/iconBox.svg" @click="isIconBox = !isIconBox" alt />
 					<img class="setting" src="@/assets/setting.svg" @click.stop="isFilter = !isFilter" alt />
-					<img class="ver" src="@/assets/ver.svg" alt />
+					<img class="ver" src="@/assets/ver.svg" @click.stop="isVersion = !isVersion" alt />
 				</div>
 			</div>
 			<div class="filter" v-if="isFilter" key="filter" @click.stop>
@@ -40,7 +40,7 @@
 					<p>{{game.name}}</p>
 				</div>
 			</div>
-			<Xiaoxiaole
+			<DataTest
 				:gameId="gameId"
 				:pushNewIcon="pushNewIcon"
 				@clientHeight="isClientHeight"
@@ -52,34 +52,43 @@
 					<p>{{index}}</p>
 				</div>
 			</div>
+			<Version v-if="isVersion" key="version" @onCloseVersion="onCloseVersion" />
 		</transition-group>
 	</div>
 </template>
 
 <script>
-import Xiaoxiaole from "./views/Xiaoxiaole.vue";
+import DataTest from "./components/DataTest.vue";
+import Version from "./components/Version.vue";
+import { getLocalStorage } from "@/utils/index";
 
 export default {
 	name: "App",
 	data() {
 		return {
-			isIconBox: false,
+			// gameID iconAmount 和 selectIndex 默认值填写第一个游戏
 			gameId: 1029,
 			iconAmount: 36,
+			selectIndex: 0,
+			//每次点击delete计数，推入图标队列后清空
 			pushNewIcon: -1,
+			bgNum: 1,
 			blur: 50,
 			brightness: 65,
-			gameSelect: false,
-			selectIndex: -1,
 			clientHeight: 444,
+			gameSelect: false,
+			isIconBox: false,
 			isFilter: false,
-			bgNum: 1,
-			tips: "点击输入框上下调整行列，点击或空格更改掉落方向",
-			ver: "0.1.0"
+			isVersion: false
 		};
 	},
+	created() {
+		let _this = this;
+		getLocalStorage(_this, "app");
+	},
 	components: {
-		Xiaoxiaole
+		DataTest,
+		Version
 	},
 	methods: {
 		onPushNewIcon(index) {
@@ -99,7 +108,19 @@ export default {
 		},
 		isClientHeight(height) {
 			this.clientHeight = height;
+		},
+		onCloseVersion(close) {
+			this.isVersion = close;
+		},
+		closeFV() {
+			this.isFilter = false;
+			this.isVersion = false;
 		}
+	},
+	updated() {
+		//获取需要持久化的数据并保存到localStorage
+		let { isFilter, isVersion, pushNewIcon, ...app } = this.$data;
+		localStorage.setItem("app", JSON.stringify(app));
 	}
 };
 </script>
@@ -112,25 +133,39 @@ export default {
 	background-size: cover !important;
 	background-position: center center !important;
 	position: fixed;
-	top: 50%;
-	left: 50%;
-	transform: translate(-50%, -50%) scale(1.05);
+	top: 0;
+	left: 0;
+	transform: scale(1.05);
+	transform-origin: center center;
 }
 #app {
-	font-family: Helvetica, Arial, sans-serif;
+	width: 100vw;
+	height: 100vh;
+	font-family: "Microsoft Yahei", Helvetica, Tahoma, Arial, sans-serif;
 	-webkit-font-smoothing: antialiased;
 	-moz-osx-font-smoothing: grayscale;
 	text-align: center;
-	color: #2c3e50;
-	position: absolute;
-	top: 50%;
-	left: 50%;
-	transform: translate(-50%, -50%);
-	span {
+	position: relative;
+	> span {
 		display: flex;
 		justify-content: center;
 		align-items: stretch;
 		transition: 0.3s ease-in-out;
+		color: #2c3e50;
+		position: absolute;
+		top: 50%;
+		left: 50%;
+		transform: translate(-50%, -50%);
+	}
+}
+.showVersion {
+	.sideBar,
+	.filter,
+	.gamesContent,
+	.dataTest,
+	.iconBox {
+		filter: brightness(0.5) !important;
+		transition: 0.5s ease-in-out;
 	}
 }
 .sideBar {

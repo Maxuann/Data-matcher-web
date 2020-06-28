@@ -1,5 +1,5 @@
 <template>
-	<div class="container" ref="container">
+	<div class="container dataTest" ref="container">
 		<div class="status_bar">
 			<div class="set_up">
 				<div>
@@ -30,49 +30,52 @@
 				</div>
 				<div class="direction" @click="onDirection">
 					<span>方向 :</span>
-					<svg
-						id="arrow_icon"
-						class="icon"
-						style="width: 20px; height: 20px;vertical-align: middle;fill: currentColor;overflow: hidden;"
-						viewBox="0 0 1024 1024"
-						version="1.1"
-						xmlns="http://www.w3.org/2000/svg"
-						p-id="10515"
-					>
-						<path
-							transition=" 0.3s ease"
-							:transform="`rotate(${isRotate})`"
-							transform-origin="center"
-							fill="#999999"
-							d="M861.9 512.1c0 17.1-5.9 31.5-17.6 43.3L534.8 864.8c-12.4 11.7-26.8 17.6-43.3 17.6-16.2 0-30.4-5.9-42.8-17.6L413 829.2c-12.1-12-18.1-26.5-18.1-43.3 0-16.8 6-31.2 18.1-43.3l139.3-139.3H217.7c-16.5 0-29.9-5.9-40.2-17.8-10.3-11.9-15.5-26.2-15.5-43v-60.9c0-16.8 5.1-31.1 15.5-43 10.3-11.9 23.7-17.8 40.2-17.8h334.7L413.1 281C401 269.6 395 255.3 395 238.2c0-17.1 6-31.4 18.1-42.8l35.7-35.7c12-12 26.3-18.1 42.8-18.1 16.8 0 31.2 6 43.3 18.1l309.5 309.5c11.7 11.2 17.5 25.4 17.5 42.9z"
-							p-id="10516"
-						/>
-					</svg>
+					<img
+						class="arrow_icon"
+						src="@/assets/arrow.svg"
+						alt
+						:style="`transform: rotate(${isRotate}deg)`"
+					/>
 				</div>
 			</div>
-			<button class="enter" :class="{failure:enter}" @click="startTest">开始 ( Enter )</button>
+			<button class="enter" :class="{locked:enter}" @click="startTest">开始 ( Enter )</button>
 		</div>
 		<div class="main">
-			<div
-				class="lattice"
-				ref="lattice"
-				:style="`grid-template-rows: repeat(${row}, ${100/row}%);grid-template-columns: repeat(${column}, ${100/column}%)`"
-			>
+			<div v-if="enter">
 				<div
-					v-for="(item,index) in row*column"
-					:key="index"
-					:style="`width:${620/row}px;height:${620/row}px`"
-					@click="onDelete(index)"
+					class="lattice"
+					ref="lattice"
+					:style="`grid-template-rows: repeat(${row}, ${100/row}%);grid-template-columns: repeat(${column}, ${100/column}%)`"
 				>
-					<transition :name="dropAnimate" mode="out-in">
-						<img
-							draggable="false"
-							:key="symbolImg(symbolsList[index].id)"
-							v-if="!symbolsList[index].isDelete && symbolsList[index].id >=0"
-							:src="symbolImg(symbolsList[index].id)"
-						/>
-					</transition>
-					<span>{{ symbolsList[index].arrId }}</span>
+					<div
+						v-for="(item,index) in row*column"
+						:key="index"
+						:style="`width:${620/row}px;height:${620/row}px`"
+						@click="onDelete(index)"
+					>
+						<transition :name="dropAnimate" mode="out-in">
+							<img
+								draggable="false"
+								:key="symbolImg(symbolsList[index].id)"
+								v-if="!symbolsList[index].isDelete && symbolsList[index].id >=0"
+								:src="symbolImg(symbolsList[index].id)"
+							/>
+						</transition>
+						<span>{{ symbolsList[index].arrId }}</span>
+					</div>
+				</div>
+			</div>
+			<div v-else>
+				<div
+					class="lattice"
+					ref="lattice"
+					:style="`grid-template-rows: repeat(${row}, ${100/row}%);grid-template-columns: repeat(${column}, ${100/column}%)`"
+				>
+					<div
+						v-for="(item,index) in row*column"
+						:key="index"
+						:style="`width:${620/row}px;height:${620/row}px`"
+					></div>
 				</div>
 			</div>
 			<div class="test">
@@ -99,19 +102,23 @@
 				</div>
 			</div>
 		</div>
+		<transition>
+			<p class="copySuccess" v-if="copySuccess">复制成功</p>
+		</transition>
 	</div>
 </template>
 
 <script>
-import { deepClone } from "@/utils/index";
+import { deepClone, getLocalStorage } from "@/utils/index";
 export default {
-	name: "Xiaoxiaole",
+	name: "DataTest",
 	data() {
 		return {
 			enter: false,
 			row: 4,
 			column: 4,
 			direction: 1,
+			dataBoxHeight: 224,
 			nextIndex: 0,
 			jsonData: [
 				0,
@@ -175,7 +182,7 @@ export default {
 			loop1Cnt: 0,
 			loop2Cnt: 0,
 			dataEdit: true,
-			dataBoxHeight: 224
+			copySuccess: false
 		};
 	},
 	props: {
@@ -188,6 +195,12 @@ export default {
 			default: -1
 		}
 	},
+	updated() {
+		//获取需要持久化的数据并保存到localStorage
+		let { row, column, direction, dataBoxHeight } = this.$data;
+		let dataTest = { row, column, direction, dataBoxHeight };
+		localStorage.setItem("dataTest", JSON.stringify(dataTest));
+	},
 	computed: {
 		rowPercent() {
 			return 100 / this.row + "%";
@@ -196,22 +209,22 @@ export default {
 			return 100 / this.column + "%";
 		},
 		isRotate() {
-			let routate;
+			let rotate;
 			switch (this.direction) {
 				case 1:
-					routate = 90;
+					rotate = 270;
 					break;
 				case 2:
-					routate = 0;
+					rotate = 180;
 					break;
 				case 3:
-					routate = 270;
+					rotate = 90;
 					break;
 				case 4:
-					routate = 180;
+					rotate = 0;
 					break;
 			}
-			return routate;
+			return rotate;
 		},
 		dropAnimate() {
 			switch (this.direction) {
@@ -320,6 +333,10 @@ export default {
 		}
 	},
 	created() {
+		//获取localStorage数据
+		let _this = this;
+		getLocalStorage(_this, "dataTest");
+
 		this.initTable();
 
 		//键盘监听控制
@@ -339,9 +356,29 @@ export default {
 			if (event.keyCode == 70)
 				//F
 				this.onFull();
+			if (event.keyCode == 67) {
+				//C
+				this.$copyText(this.jsonData).then(
+					e => {
+						this.copySuccess = true;
+						setTimeout(() => {
+							this.copySuccess = false;
+						}, 1000);
+					},
+					e => {
+						alert("复制失败:" + e);
+					}
+				);
+			}
+			if (event.keyCode == 27) {
+				//Ese
+				localStorage.clear();
+				location.reload();
+			}
 		};
 	},
 	methods: {
+		//------------------------
 		startTest() {
 			const symbolCnt = this.row * this.column;
 			// if (this.jsonData.length < symbolCnt) {--------------------------------------------
@@ -461,7 +498,6 @@ export default {
 						this.resetLineSymbols(symbols, dropLine, lineIdList); // 整理这一条线
 					}
 					this.symbolsList = deepClone(symbols);
-
 					break;
 				case false:
 					null;
@@ -558,14 +594,30 @@ export default {
 	display: flex;
 	justify-content: center;
 	align-items: stretch;
+	flex-direction: column;
+	background-color: @bg;
 	.status_bar {
+		width: 100%;
 		height: 64px;
+		padding: 15px;
+		box-sizing: border-box;
+		background-color: @lattice - 10;
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
 		.set_up {
 			display: flex;
 			justify-content: flex-start;
 			align-items: center;
 			div:not(:first-child) {
 				margin-left: 26px;
+			}
+			.direction {
+				.arrow_icon {
+					width: 20px;
+					height: 20px;
+					transition: 0.3s ease-in-out;
+				}
 			}
 		}
 	}
@@ -593,7 +645,6 @@ export default {
 			}
 			.dataBox {
 				position: relative;
-				width: 120px;
 				height: 224px;
 				border-radius: 4px;
 				background-color: @lattice;
@@ -688,6 +739,20 @@ export default {
 	}
 	.curr_color {
 		color: #f00;
+	}
+	.copySuccess {
+		width: 90px;
+		height: 26px;
+		line-height: 26px;
+		font-size: 13px;
+		letter-spacing: 3px;
+		color: #fff;
+		background-color: rgba(0, 0, 0, 0.6);
+		border-radius: 4px;
+		position: absolute;
+		bottom: 10px;
+		left: 50%;
+		transform: translateX(-50%);
 	}
 }
 //默认淡入淡出切换
